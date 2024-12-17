@@ -4,6 +4,6 @@
 
 (subsection_title) @markup.heading.3
 
-(option) @variable.parameter
+(option_list) @variable.parameter
 
 (reference) @markup.link.label

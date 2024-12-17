@@ -43,11 +43,6 @@
     }
   },
   {
-    "type": "option",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "option_description",
     "named": true,
     "fields": {},
@@ -71,7 +66,38 @@
       "required": true,
       "types": [
         {
-          "type": "option",
+          "type": "option_list",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "option_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "long_option",
+          "named": true
+        },
+        {
+          "type": "short_option",
+          "named": true
+        },
+        {
+          "type": "short_option_value",
+          "named": true
+        },
+        {
+          "type": "short_option_value_pair",
+          "named": true
+        },
+        {
+          "type": "value_option_bracket",
           "named": true
         }
       ]
@@ -139,7 +165,20 @@
     }
   },
   {
+    "type": "value_option_bracket",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
     "type": "footer",
+    "named": true
+  },
+  {
+    "type": "long_option",
     "named": true
   },
   {
@@ -148,6 +187,18 @@
   },
   {
     "type": "section_title",
+    "named": true
+  },
+  {
+    "type": "short_option",
+    "named": true
+  },
+  {
+    "type": "short_option_value",
+    "named": true
+  },
+  {
+    "type": "short_option_value_pair",
     "named": true
   },
   {
