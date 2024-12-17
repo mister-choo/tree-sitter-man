@@ -4,68 +4,73 @@ const ANYTHING_STARTING_NON_WHITESPACE = /\S[^\r\n]*/;
 const LINE_CONTENT = /\S[^\r\n]*\r?\n/;
 
 module.exports = grammar({
-  name: 'man',
+  name: "man",
 
-  // Control whitespace explicitly
   extras: ($) => [],
 
   externals: ($) => [$.footer],
 
   rules: {
-    manual: ($) => seq(alias(ANYTHING, $.title), NEWLINE, $._body),
-
-    _body: ($) =>
-      repeat1(
-        choice(
-          $.section_heading,
-          $.footer,
-          NEWLINE,
-        ),
-      ),
-
-    block: ($) =>
-      prec.right(seq($._content, repeat(choice($._content, NEWLINE)))),
-
-    _content: ($) =>
+    manual: ($) =>
       seq(
-        // NOTE: `/ {7,}/` doesn't work?
-        / {7} */,
-        choice(
-          $.reference,
-          token(prec(-1, /\S+/)),
-        ),
-        repeat(choice(token(prec(-1, /\S+/)), $.reference, / +/)),
+        alias(LINE_CONTENT, $.title),
         NEWLINE,
+        repeat1($.section),
+        $.footer
       ),
 
-    section_heading: ($) =>
+    section: ($) =>
       seq(
         alias(LINE_CONTENT, $.section_title),
-        repeat(choice($.block, $.subsection_heading)),
+        repeat1(choice($.body, $.subsection_heading)),
       ),
 
     subsection_heading: ($) =>
       prec.right(
-        seq(
-          / {3}/,
-          alias(LINE_CONTENT, $.subsection_title),
-          repeat(choice($.block, $.option_section, NEWLINE)),
-        ),
+        seq(/ {3}/, alias(LINE_CONTENT, $.subsection_title), repeat($.body)),
       ),
 
-    // TODO: Handle when a reference is hyphenated, as seen in `man 2 wait`
-    reference: ($) => /[a-zA-Z0-9_]+\(\d+\)/,
+    body: ($) => prec.right(repeat1(choice($.option_section, $._block))),
 
-    // extremely simple heuristic to highlight most option sections
-    option_section: ($) =>
-      prec.right(seq(
-        alias(
-          / {7}([-+]\S+( +[A-Z]+| +<\S+>)?, +)*[-+]\S+( +[A-Z]+\s*\r?\n| +<\S+>\s*\r?\n)?/,
-          $.option,
+    _block: ($) => prec.right(seq(repeat1($._line), NEWLINE)),
+
+    _text: ($) => seq(choice(
+          $.reference,
+          token(prec(-2, /[^\r\n]\S*/)), // Start with non-hyphen
         ),
-        optional(ANYTHING),
+        repeat(choice(token(prec(-1, /\S+/)), $.reference, / +/))),
+
+
+    _line_10: ($) =>
+      seq(
+        / {10}/,
+        $._text,
         NEWLINE,
-        optional($.block),
-      )),
+      ),
+
+    _line: ($) =>
+      seq(
+        / {7}/,
+        $._text,
+        NEWLINE,
+      ),
+
+    reference: ($) => /[a-zA-Z0-9_][a-zA-Z0-9_\-]+\(\d+\)/,
+
+    short_option: ($) => /\-[a-zA-Z0-9]{1}/,
+
+    long_option: ($) => /--[a-zA-Z0-9][a-zA-Z0-9_\-]+/,
+
+    option_section: ($) => seq($.option_line, optional($.option_description)),
+
+    option: ($) =>
+      seq(
+        /[+-][a-zA-Z0-9-]+/, // First option
+        optional(/, -[a-zA-Z0-9-]+/), // Optional second option
+      ),
+
+    option_line: ($) => seq(/ {7}/, $.option, optional(ANYTHING), NEWLINE),
+
+    option_description: ($) => prec.right(repeat1(choice($._line_10, NEWLINE))),
   },
 });

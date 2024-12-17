@@ -10,6 +10,14 @@
     "type": "git",
     "url": "git+ssh://git@github.com/ribru17/tree-sitter-man.git"
   },
+  "tree-sitter": [
+    {
+      "scope": "source.man",
+      "file-types": [
+        "man",
+      ]
+    }
+  ],
   "keywords": [
     "parser",
     "lexer",

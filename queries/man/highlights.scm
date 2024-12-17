@@ -7,5 +7,3 @@
 (option) @variable.parameter
 
 (reference) @markup.link.label
-
-(footer) @markup.heading
