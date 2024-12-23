@@ -17,9 +17,10 @@ module.exports = grammar({
         alias(LINE_CONTENT, $.title),
         NEWLINE,
         repeat1($.section),
-        alias(LINE_CONTENT, $.footer),
-        optional(NEWLINE),
+        optional($.footer)
       ),
+
+    footer: ($) => seq(LINE_CONTENT, NEWLINE),
 
     section: ($) =>
       seq(
@@ -36,89 +37,104 @@ module.exports = grammar({
 
     _block: ($) => prec.right(seq(repeat1($._line), NEWLINE)),
 
-    _text: ($) => seq(choice(
+    _text: ($) =>
+      seq(
+        choice(
           $.reference,
           token(prec(-2, /[^\r\n]\S*/)), // Start with non-hyphen
         ),
-        repeat(choice(token(prec(-1, /\S+/)), $.reference, / +/))),
-
-
-    _line_10: ($) =>
-      seq(
-        / {10}/,
-        $._text,
-        NEWLINE,
+        repeat(choice(token(prec(-1, /\S+/)), $.reference, / +/)),
       ),
 
-    _line: ($) =>
-      seq(
-        / {7}/,
-        $._text,
-        NEWLINE,
-      ),
+    _line_10: ($) => seq(/ {10}/, $._text, NEWLINE),
+
+    _line: ($) => seq(/ {7}/, $._text, NEWLINE),
 
     reference: ($) => /[a-zA-Z0-9_][a-zA-Z0-9_\-]+\(\d+\)/,
 
-    short_option: ($) => /\-[a-zA-Z0-9]{1}/,
-
-    long_option: ($) => /--[a-zA-Z0-9][a-zA-Z0-9_\-]+/,
-
-    option_section: ($) => seq($.option_line, optional($.option_description)),
-
-    option: ($) =>
-      seq(
-        /[+-][a-zA-Z0-9-]+/, // First option
-        optional(/, -[a-zA-Z0-9-]+/), // Optional second option
-      ),
+    option_section: ($) => choice($.long_option_long_line, $.option_long_line, seq($.option_line, optional($.option_description))),
 
     option_line: ($) => seq(/ {7}/, $.option_list, NEWLINE),
+
+    option_long_line: ($) => seq(/ {7}/, $.short_option, / {3} +/, $.long_line_description),
+
+    long_option_long_line: ($) => seq(/ {7}/, $.long_option_simple, / +/, $.long_line_description),
+
+    long_line_description: ($) => seq(LINE_CONTENT, optional($.option_description)),
 
     option_list: ($) =>
       seq(
         choice(
+          $.value_option_bracket,
           $.short_option,
           $.short_option_value,
           $.short_option_value_pair,
           $.long_option,
-          $.value_option_bracket,
+          // prec(-2, $.short_option_long_line),
         ),
         repeat(
           seq(
             ",",
             /[ \t]+/,
             choice(
+              $.value_option_bracket,
               $.short_option,
               $.short_option_value,
               $.short_option_value_pair,
               $.long_option,
-              $.value_option_bracket,
             ),
           ),
         ),
       ),
 
-    // Short options like -x
     short_option: ($) => /[-+][a-zA-Z0-9]/,
 
     short_option_value: ($) => /[-+][a-zA-Z0-9] <?[a-zA-Z0-9]+>?/,
 
+    // short_option_long_line: ($) => /[-+][a-zA-Z0-9] +[\S ]+/,
+
     short_option_value_pair: ($) =>
       /[-+][a-zA-Z0-9] <[a-zA-Z0-9]+>=<[a-zA-Z0-9]+>/,
 
-    // Long options like --extended
-    long_option: ($) => /--[a-zA-Z][a-zA-Z0-9\-]*/,
+    long_option_simple: ($) => 
+      /--[a-zA-Z][a-zA-Z0-9\-]*/,
 
-    // long_option_brackets: ($) => /--[a-zA-Z][a-zA-Z0-9-]*(\[[^\]]*\])*/,
-    // // long_option_set_brackets: ($) => seq(/--[a-zA-Z][a-zA-Z0-9-]*=, (\[[^\]]*\])*/),
-    //
-    // // Options with values like --scheme=SCHEME
-    value_option_bracket: ($) => seq(/--[a-zA-Z][a-zA-Z0-9-]*=?[a-zA-Z]?/, repeat1($._bracket)),
+    long_option: ($) => choice(
+      /--[a-zA-Z][a-zA-Z0-9\-]*/,
+      /--[a-zA-Z][a-zA-Z0-9\-]*\[=<[a-zA-Z]+>\]/,
+      /--[a-zA-Z][a-zA-Z0-9\-]*=[A-Z]+\[,..\]/,
+      /--[a-zA-Z][a-zA-Z0-9\-]*=[A-Z0-9]+\[A-Z0-9\]/,
+      /--[a-zA-Z][a-zA-Z0-9\-]*=[a-zA-Z_]+/,
+      /--[a-zA-Z][a-zA-Z0-9\-]*=[a-zA-Z_]+ \[\.\.\.\]/,
 
-    value_option_bracket: ($) => seq(/--[a-zA-Z][a-zA-Z0-9-]*=/, /[a-zA-Z0-9-]+/),
+      // prec(-2, /--[a-zA-Z][a-zA-Z0-9\-]* [a-zA-Z|\[\]\-:]+/),
+      // prec(-2, /--[a-zA-Z][a-zA-Z0-9\-]* [a-zA-Z|\[\]\-: \.]+/),
+      // prec(-5, seq(/--[a-zA-Z][a-zA-Z0-9\-]* /, ANYTHING))
+    ),
 
-    _bracket: ($) => prec.right(seq(choice("<", "(", "["), choice(repeat($._bracket), prec(-2, /\S+/)), choice(">", ")", "]"))),
+    value_option_bracket: ($) =>
+      seq(/--[a-zA-Z][a-zA-Z0-9\-]*\=*[a-zA-Z]*/, repeat1($.bracket)),
 
-    // value_option_array: ($) => /--[a-zA-Z][a-zA-Z0-9-]*=<.*>\[.*\]*/,
+    bracket: ($) =>
+      prec.right(
+        choice(
+          seq(
+            "<",
+            /\S+/,
+            ">",
+          ),
+          seq(
+            "(",
+            /\S+/,
+            ")",
+          ),
+          seq(
+            "[",
+            /\S+/,
+            "]",
+          ),
+        ),
+      ),
 
     option_description: ($) => prec.right(repeat1(choice($._line_10, NEWLINE))),
   },
