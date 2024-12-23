@@ -17,7 +17,7 @@ module.exports = grammar({
         alias(LINE_CONTENT, $.title),
         NEWLINE,
         repeat1($.section),
-        optional($.footer)
+        optional($.footer),
       ),
 
     footer: ($) => seq(LINE_CONTENT, NEWLINE),
@@ -52,15 +52,23 @@ module.exports = grammar({
 
     reference: ($) => /[a-zA-Z0-9_][a-zA-Z0-9_\-]+\(\d+\)/,
 
-    option_section: ($) => choice($.long_option_long_line, $.option_long_line, seq($.option_line, optional($.option_description))),
+    option_section: ($) =>
+      choice(
+        $.long_option_long_line,
+        $.option_long_line,
+        seq($.option_line, optional($.option_description)),
+      ),
 
     option_line: ($) => seq(/ {7}/, $.option_list, NEWLINE),
 
-    option_long_line: ($) => seq(/ {7}/, $.short_option, / {3} +/, $.long_line_description),
+    option_long_line: ($) =>
+      seq(/ {7}/, $.short_option, / {3} +/, $.long_line_description),
 
-    long_option_long_line: ($) => seq(/ {7}/, $.long_option_simple, / +/, $.long_line_description),
+    long_option_long_line: ($) =>
+      seq(/ {7}/, $.long_option_simple, / +/, $.long_line_description),
 
-    long_line_description: ($) => seq(LINE_CONTENT, optional($.option_description)),
+    long_line_description: ($) =>
+      seq(LINE_CONTENT, optional($.option_description)),
 
     option_list: ($) =>
       seq(
@@ -96,21 +104,21 @@ module.exports = grammar({
     short_option_value_pair: ($) =>
       /[-+][a-zA-Z0-9] <[a-zA-Z0-9]+>=<[a-zA-Z0-9]+>/,
 
-    long_option_simple: ($) => 
-      /--[a-zA-Z][a-zA-Z0-9\-]*/,
+    long_option_simple: ($) => /--[a-zA-Z][a-zA-Z0-9\-]*/,
 
-    long_option: ($) => choice(
-      /--[a-zA-Z][a-zA-Z0-9\-]*/,
-      /--[a-zA-Z][a-zA-Z0-9\-]*\[=<[a-zA-Z]+>\]/,
-      /--[a-zA-Z][a-zA-Z0-9\-]*=[A-Z]+\[,..\]/,
-      /--[a-zA-Z][a-zA-Z0-9\-]*=[A-Z0-9]+\[A-Z0-9\]/,
-      /--[a-zA-Z][a-zA-Z0-9\-]*=[a-zA-Z_]+/,
-      /--[a-zA-Z][a-zA-Z0-9\-]*=[a-zA-Z_]+ \[\.\.\.\]/,
+    long_option: ($) =>
+      choice(
+        /--[a-zA-Z][a-zA-Z0-9\-]*/,
+        /--[a-zA-Z][a-zA-Z0-9\-]*\[=<[a-zA-Z]+>\]/,
+        /--[a-zA-Z][a-zA-Z0-9\-]*=[A-Z]+\[,..\]/,
+        /--[a-zA-Z][a-zA-Z0-9\-]*=[A-Z0-9]+\[A-Z0-9\]/,
+        /--[a-zA-Z][a-zA-Z0-9\-]*=[a-zA-Z_]+/,
+        /--[a-zA-Z][a-zA-Z0-9\-]*=[a-zA-Z_]+ \[\.\.\.\]/,
 
-      // prec(-2, /--[a-zA-Z][a-zA-Z0-9\-]* [a-zA-Z|\[\]\-:]+/),
-      // prec(-2, /--[a-zA-Z][a-zA-Z0-9\-]* [a-zA-Z|\[\]\-: \.]+/),
-      // prec(-5, seq(/--[a-zA-Z][a-zA-Z0-9\-]* /, ANYTHING))
-    ),
+        // prec(-2, /--[a-zA-Z][a-zA-Z0-9\-]* [a-zA-Z|\[\]\-:]+/),
+        // prec(-2, /--[a-zA-Z][a-zA-Z0-9\-]* [a-zA-Z|\[\]\-: \.]+/),
+        // prec(-5, seq(/--[a-zA-Z][a-zA-Z0-9\-]* /, ANYTHING))
+      ),
 
     value_option_bracket: ($) =>
       seq(/--[a-zA-Z][a-zA-Z0-9\-]*\=*[a-zA-Z]*/, repeat1($.bracket)),
@@ -118,21 +126,9 @@ module.exports = grammar({
     bracket: ($) =>
       prec.right(
         choice(
-          seq(
-            "<",
-            /\S+/,
-            ">",
-          ),
-          seq(
-            "(",
-            /\S+/,
-            ")",
-          ),
-          seq(
-            "[",
-            /\S+/,
-            "]",
-          ),
+          seq("<", /\S+/, ">"),
+          seq("(", /\S+/, ")"),
+          seq("[", /\S+/, "]"),
         ),
       ),
 
